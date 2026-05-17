@@ -1,0 +1,70 @@
+---
+name: multi
+
+services:
+  multi_app:
+    build: ./app
+    ports:
+      - "5173:5173"
+    environment:
+      DATABASE_URL: postgresql://postgres:password@db_command:5432/myapp
+    depends_on:
+      db_command:
+        condition: service_healthy
+    volumes:
+      - ./app/src:/app/src
+
+  db_command:
+    container_name: multi_db_command
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      interval: 10s
+      retries: 5
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      timeout: 5s
+    image: postgres:14
+    depends_on:
+      db_one:
+        condition: service_healthy
+      db_two:
+        condition: service_healthy
+    volumes:
+      - pgdata_command:/var/lib/postgresql/data/
+
+  db_one:
+    container_name: multi_db_one
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      interval: 10s
+      retries: 5
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      timeout: 5s
+    image: postgres:14
+    volumes:
+      - pgdata_one:/var/lib/postgresql/data/
+
+  db_two:
+    container_name: multi_db_two
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      interval: 10s
+      retries: 5
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      timeout: 5s
+    image: postgres:14
+    volumes:
+      - pgdata_two:/var/lib/postgresql/data/
+
+volumes:
+  pgdata_command:
+    driver: local
+  pgdata_one:
+    driver: local
+  pgdata_two:
+    driver: local
